@@ -1,4 +1,4 @@
-import requests, json, os, sys, subprocess, time, datetime, threading
+import requests, json, os, sys, subprocess, time, datetime, threading, sqlite3
 
 config = json.loads(open('data/config.json','r').read())
 
@@ -28,6 +28,9 @@ def iscommand(text,plugins):
     text_split = text.split(' ')
     result = {}
     cmd = False
+    
+    if len(text)==0:
+        return False
 
     if text_split[0][0] == '/' and text_split[0][1:] in config['names']:
         cmd = text_split[1]
@@ -38,14 +41,24 @@ def iscommand(text,plugins):
         cmd = text_split[1]
     if text_split[0] not in config['names'] and text_split[0][0] != '/':
         cmd = text_split[0]
+    if text_split[0] == '/' and text_split[1] in config['names']:
+        cmd = text_split[2]
+    if text_split[0] == '/' and text_split[1] not in config['names']:
+        cmd = text_split[1]
 
     if cmd == False: return cmd
     for plugin in plugins:
         if cmd in plugin.main.keywords:
             result['plugin'] = plugin
             result['cmd'] = cmd
+            result['user_text'] = text.split(cmd)[1][1:]
+
+
             return result
     
     return False
 
-
+def setcontext(name,userid,userdb): 
+    userdb.cursor().execute('UPDATE main SET context=\''+name+'\' WHERE id='+str(userid))
+    userdb.commit()
+    log('Обновлён контекст для пользователя '+str(userid)+' на '+name,0)
