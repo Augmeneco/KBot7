@@ -1,5 +1,6 @@
 import requests, json, os, sys, subprocess, time, datetime, threading, importlib, sqlite3, traceback
 from plugins.utils import *
+import plugins.handler as handler
 
 config = json.loads(open('data/config.json','r').read())
 
@@ -19,7 +20,7 @@ else:
 plugins = []
 contexts = []
 for file in os.listdir('plugins'):
-    if os.path.isfile('plugins/'+file) and '.py' in file and file not in ['utils.py']:
+    if os.path.isfile('plugins/'+file) and '.py' in file and file not in ['utils.py','handler.py']:
         plugin = importlib.import_module('plugins.'+file.replace('.py',''))
         plugins.append(plugin)
         log('Загружен плагин {0}'.format(file.replace('.py','')),0)
@@ -68,14 +69,17 @@ while(True):
                     apisay('Ты в бане :(',msg['toho'])
                     continue
 
+                msg['userdata'] = json.loads(userinfo[3])
+                msg['userdb'] = userdb
                 cmdinfo = iscommand(msg['text'],plugins)
-                if cmdinfo != False:
+                msg['cmdinfo'] = cmdinfo
+
+                if cmdinfo['iscommand'] != False:
                     if userinfo[1] >= cmdinfo['plugin'].main.level and userinfo[2] == 'main':
                         active['bot_uses'] += 1
                         msg['active'] = active
-                        msg['userdb'] = userdb
                         msg['user_text'] = cmdinfo['user_text']
-                        log('Вызвана команда '+cmdinfo['cmd']+' с текстом: '+msg['text'],msg['toho'])
+                        log('Вызвана команда '+cmdinfo['iscommand']+' с текстом: '+msg['text'],msg['toho'])
                         plugin = cmdinfo['plugin'].main()
                         threading.Thread(target=plugin.execute,args=(msg,)).start()
                     if userinfo[1] < cmdinfo['plugin'].main.level:
@@ -88,6 +92,7 @@ while(True):
                             threading.Thread(target=context['execute'],args=(msg,)).start()
                             setcontext('main',msg['userid'],userdb)
                             break
+                handler.execute(updates,msg)
 
 
 

@@ -26,37 +26,43 @@ def apisay(text,toho,attachment=None,keyboard={"buttons":[],"one_time":True},pho
 
 def iscommand(text,plugins):
     text_split = text.split(' ')
-    result = {}
+    result = {'iscommand':False,'isbotname':False}
     cmd = False
-    
+
     if len(text)==0:
-        return False
+        return result
 
     if text_split[0][0] == '/' and text_split[0][1:] in config['names']:
+        result['user_text'] = text.split(text_split[0])[1][1:]
+        result['isbotname'] = True
         cmd = text_split[1]
     if text_split[0][0] == '/':
         if text_split[0][1:] not in config['names']:
+            result['user_text'] = text.split(text_split[0])[1][1:]
             cmd = text_split[0][1:]
-    if text_split[0] in config['names']:
+    if text_split[0] in config['names'] and len(text_split)>1:
+        result['isbotname'] = True
+        result['user_text'] = text.split(text_split[0])[1][1:]
         cmd = text_split[1]
     if text_split[0] not in config['names'] and text_split[0][0] != '/':
+        result['user_text'] = text.split(text_split[0])[1][1:]
         cmd = text_split[0]
     if text_split[0] == '/' and text_split[1] in config['names']:
+        result['isbotname'] = True
+        result['user_text'] = text.split('/ '+text_split[1])[1][1:]
         cmd = text_split[2]
     if text_split[0] == '/' and text_split[1] not in config['names']:
+        result['user_text'] = text.split('/ '+text_split[1])[1][1:]
         cmd = text_split[1]
-
-    if cmd == False: return cmd
+    if cmd == False: return result
     for plugin in plugins:
         if cmd in plugin.main.keywords:
             result['plugin'] = plugin
-            result['cmd'] = cmd
-            result['user_text'] = text.split(cmd)[1][1:]
-
-
+            result['iscommand'] = cmd
+            result['user_text'] = text.split(result['iscommand'])[1][1:]
             return result
     
-    return False
+    return result
 
 def setcontext(name,userid,userdb): 
     userdb.cursor().execute('UPDATE main SET context=\''+name+'\' WHERE id='+str(userid))
