@@ -52,7 +52,7 @@ while(True):
             if updates['type'] == 'message_new':
                 updates = updates['object']['message']
                 msg = updates
-                msg['text'] = msg['text'].lower()
+                msg['text'] = msg['text']
                 msg['toho'] = updates['peer_id']
                 msg['userid'] = updates['from_id']
                 msg['text_split'] = msg['text'].split(' ')
@@ -92,7 +92,7 @@ while(True):
                             threading.Thread(target=context['execute'],args=(msg,)).start()
                             setcontext('main',msg['userid'],userdb)
                             break
-                handler.execute(updates,msg)
+                threading.Thread(target=handler.execute,args=(updates,msg)).start()
 
 
 

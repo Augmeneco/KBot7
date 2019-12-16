@@ -43,10 +43,10 @@ class main:
 		
 		
 		if message['from_id'] < 0:
-			user_info = requests.post('https://api.vk.com/method/groups.getById',data={'access_token':kb.config['group_token'],'v':'5.90','group_ids':message['from_id']*-1}).json()['response'][0]
+			user_info = requests.post('https://api.vk.com/method/groups.getById',data={'access_token':msg['config']['group_token'],'v':'5.90','group_ids':message['from_id']*-1}).json()['response'][0]
 			name = user_info['name']
 		else:
-			user_info = requests.post('https://api.vk.com/method/users.get',data={'access_token':kb.config['group_token'],'v':'5.90','fields':'photo_200','user_ids':message['from_id']}).json()['response'][0]
+			user_info = requests.post('https://api.vk.com/method/users.get',data={'access_token':msg['config']['group_token'],'v':'5.90','fields':'photo_200','user_ids':message['from_id']}).json()['response'][0]
 			name = user_info['first_name']+' '+user_info['last_name']
 
 		ava = user_info['photo_200']

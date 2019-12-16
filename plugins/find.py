@@ -6,6 +6,8 @@ class main:
 	level = 1
 	keywords = ['что','чтоэто']
 	def execute(self, msg):
+		if len(msg['user_text']) > 0:
+			exit()
 		if 'photo' in msg['attachments'][0]:
 			ret = msg['attachments'][0]['photo']['sizes']
 			num = 0
@@ -13,7 +15,6 @@ class main:
 				if size['width'] > num:
 					num = size['width']
 					url = size['url']
-			print(1)
 			index = requests.get('https://yandex.ru/images/search?url='+url+'&rpt=imageview').text
 			soup = BeautifulSoup(index, 'html.parser')
 			out = ''

@@ -32,27 +32,36 @@ def iscommand(text,plugins):
     if len(text)==0:
         return result
 
-    if text_split[0][0] == '/' and text_split[0][1:] in config['names']:
-        result['user_text'] = text.split(text_split[0])[1][1:]
+    if text_split[0][0] == '/' and text_split[0][1:].lower() in config['names']:
+        text_split[0] = text_split[0].lower()
+        text_split[1] = text_split[1].lower()
+        result['user_text'] = ' '.join(text_split).split(text_split[0])[1][1:]
         result['isbotname'] = True
         cmd = text_split[1]
     if text_split[0][0] == '/':
-        if text_split[0][1:] not in config['names']:
-            result['user_text'] = text.split(text_split[0])[1][1:]
+        if text_split[0][1:].lower() not in config['names']:
+            text_split[0] = text_split[0].lower()
+            result['user_text'] = ' '.join(text_split).split(text_split[0])[1][1:]
             cmd = text_split[0][1:]
-    if text_split[0] in config['names'] and len(text_split)>1:
+    if text_split[0].lower() in config['names'] and len(text_split)>1:
+        text_split[0] = text_split[0].lower()
+        text_split[1] = text_split[1].lower()
         result['isbotname'] = True
-        result['user_text'] = text.split(text_split[0])[1][1:]
+        result['user_text'] = ' '.join(text_split).split(text_split[0])[1][1:]
         cmd = text_split[1]
-    if text_split[0] not in config['names'] and text_split[0][0] != '/':
-        result['user_text'] = text.split(text_split[0])[1][1:]
+    if text_split[0].lower() not in config['names'] and text_split[0][0] != '/':
+        text_split[0] = text_split[0].lower()
+        result['user_text'] = ' '.join(text_split).split(text_split[0])[1][1:]
         cmd = text_split[0]
-    if text_split[0] == '/' and text_split[1] in config['names']:
+    if text_split[0] == '/' and text_split[1].lower() in config['names']:
+        text_split[1] = text_split[0].lower()
+        text_split[2] = text_split[1].lower()
         result['isbotname'] = True
-        result['user_text'] = text.split('/ '+text_split[1])[1][1:]
+        result['user_text'] = ' '.join(text_split).split('/ '+text_split[1])[1][1:]
         cmd = text_split[2]
-    if text_split[0] == '/' and text_split[1] not in config['names']:
-        result['user_text'] = text.split('/ '+text_split[1])[1][1:]
+    if text_split[0] == '/' and text_split[1].lower() not in config['names']:
+        text_split[1] = text_split[1].lower()
+        result['user_text'] = ' '.join(text_split).split('/ '+text_split[1])[1][1:]
         cmd = text_split[1]
     if cmd == False: return result
     for plugin in plugins:

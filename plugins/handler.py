@@ -13,8 +13,8 @@ def execute(updates,msg):
             params = {'access_token':msg['config']['group_token'],'v':'5.103','user_ids':updates['action']['member_id']}
             name = requests.post('https://api.vk.com/method/users.get',data=params).json()['response'][0]
             name = '[id{0}|{1} {2}]'.format(name['id'],name['first_name'],name['last_name'])  
-            apisay(name+' покинул беседу (ну и плевать)',msg['toho'])
-    if msg['text'].split(' ')[0] in ['/f','f']:
+            apisay(name+' покинул беседу (ну и похуй)',msg['toho'])
+    if msg['text'].split(' ')[0].lower() in ['/f','f']:
         apisay('F',msg['toho'],attachment='photo-158856938_457255856')
     if msg['cmdinfo']['iscommand'] == False and msg['cmdinfo']['isbotname'] == True:
         if 'user_text' not in msg['cmdinfo']['user_text']:

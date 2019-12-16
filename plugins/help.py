@@ -32,7 +32,7 @@ class main:
 &#8195;bot_use_names
 
 Автор - [id354255965|Кикер] 
-Исходный код бота - https://github.com/Augmeneco/Senku-Bot'''
+Исходный код бота - https://github.com/Augmeneco/KBot7'''
 		names = ', '.join([name for name in msg['config']['names']])
 		text = text.replace('bot_name',msg['config']['names'][0]).replace('bot_use_names',names)
 		apisay(text,msg['toho'])

@@ -5,11 +5,11 @@ class main:
 	level = 1
 	keywords = ['доки','docs']
 	def execute(self, msg):
-		param = {'v':'5.90','q':msg['user_text'],'count':'0','access_token':kb.config['user_token']}
+		param = {'v':'5.90','q':msg['user_text'],'count':'0','access_token':msg['config']['user_token']}
 		count = requests.post('https://api.vk.com/method/docs.search', data=param).json()['response']['count']
 		if count > 10: count = count-10
 		if count < 11: count = 0
-		param = {'v':'5.90','q':msg['user_text'],'offset':random.randint(0,count),'count':'10','access_token':kb.config['user_token']}
+		param = {'v':'5.90','q':msg['user_text'],'offset':random.randint(0,count),'count':'10','access_token':msg['config']['user_token']}
 		items = requests.post('https://api.vk.com/method/docs.search', data=param).json()['response']['items']
 
 		attachment = ''
