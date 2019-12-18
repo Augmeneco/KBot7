@@ -1,0 +1,4 @@
+requests
+untangle
+bs4
+pillow

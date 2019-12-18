@@ -1,3 +1,5 @@
+open('./sosi.txt','w').write('sosi')
+
 import requests, json, os, sys, subprocess, time, datetime, threading, importlib, sqlite3, traceback
 from plugins.utils import *
 import plugins.handler as handler
