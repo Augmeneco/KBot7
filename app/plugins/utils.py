@@ -34,38 +34,32 @@ def iscommand(text,plugins):
 
     if text_split[0][0] == '/' and text_split[0][1:].lower() in config['names']:
         text_split[0] = text_split[0].lower()
-        text_split[1] = text_split[1].lower()
         result['user_text'] = ' '.join(text_split).split(text_split[0])[1][1:]
         result['isbotname'] = True
         cmd = text_split[1]
     if text_split[0][0] == '/':
         if text_split[0][1:].lower() not in config['names']:
-            text_split[0] = text_split[0].lower()
             result['user_text'] = ' '.join(text_split).split(text_split[0])[1][1:]
             cmd = text_split[0][1:]
     if text_split[0].lower() in config['names'] and len(text_split)>1:
         text_split[0] = text_split[0].lower()
-        text_split[1] = text_split[1].lower()
         result['isbotname'] = True
         result['user_text'] = ' '.join(text_split).split(text_split[0])[1][1:]
         cmd = text_split[1]
     if text_split[0].lower() not in config['names'] and text_split[0][0] != '/':
-        text_split[0] = text_split[0].lower()
         result['user_text'] = ' '.join(text_split).split(text_split[0])[1][1:]
         cmd = text_split[0]
     if text_split[0] == '/' and text_split[1].lower() in config['names']:
         text_split[1] = text_split[0].lower()
-        text_split[2] = text_split[1].lower()
         result['isbotname'] = True
         result['user_text'] = ' '.join(text_split).split('/ '+text_split[1])[1][1:]
         cmd = text_split[2]
     if text_split[0] == '/' and text_split[1].lower() not in config['names']:
-        text_split[1] = text_split[1].lower()
         result['user_text'] = ' '.join(text_split).split('/ '+text_split[1])[1][1:]
         cmd = text_split[1]
     if cmd == False: return result
     for plugin in plugins:
-        if cmd in plugin.main.keywords:
+        if cmd.lower() in plugin.main.keywords:
             result['plugin'] = plugin
             result['iscommand'] = cmd
             result['user_text'] = text.split(result['iscommand'])[1][1:]

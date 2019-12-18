@@ -5,7 +5,7 @@ from plugins.utils import *
 
 class main:
 	level = 1
-	keywords = ['цитген','citgen','цитата','quote']
+	keywords = ['цитген','citgen','quote','цитата']
 	def execute(self,msg):
 		def wrapper(s, length):
 			lines = list()
@@ -22,7 +22,7 @@ class main:
 			return lines
 		
 		for font in ['Roboto-Regular.ttf','Roboto-Medium.ttf']:
-			if font not in os.listdir('/tmp/tmpfs'):
+			if font not in os.listdir('/tmp/'):
 				ret = requests.get('https://github.com/Augmeneco/KBot5/blob/master/data/'+font+'?raw=true').content
 				open('/tmp/'+font,'wb').write(ret)
 		
