@@ -1,8 +1,10 @@
-open('./sosi.txt','w').write('sosi')
-
-import requests, json, os, sys, subprocess, time, datetime, threading, importlib, sqlite3, traceback
+import requests, json, os, sys, subprocess, time, datetime, sqlite3, threading, importlib, traceback, psycopg2
 from plugins.utils import *
 import plugins.handler as handler
+
+if '-dev' in sys.argv:
+    devmode = True
+else: devmode = False 
 
 config = json.loads(open('data/config.json','r').read())
 
@@ -13,11 +15,19 @@ config['name'] = ret['name']
 
 log('{0} версии {1} от Augmeneco'.format(config['name'],config['version']),0)
 
-if not os.path.exists('data/users.db'):
-    userdb = sqlite3.connect('data/users.db')
-    userdb.cursor().execute('CREATE TABLE main (id INTEGER,perm INTEGER,context TEXT,data TEXT)')
+if devmode:
+    #db = sqlite3.connect('db')
+    db = psycopg2.connect(database='kbot',user='cha14ka')
+    db_cur = db.cursor()
+    config['names'] = ['кбт','тест']
 else:
-    userdb = sqlite3.connect('data/users.db')
+    db = psycopg2.connect(os.environ['DATABASE_URL'], sslmode='require')
+    db_cur = db.cursor()
+
+db_cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER,perm INTEGER,context TEXT,data TEXT)')
+db_cur.execute('CREATE TABLE IF NOT EXISTS system (name TEXT,data TEXT)')
+db_cur.execute('CREATE TABLE IF NOT EXISTS dialogs (id INTEGER,data TEXT,users TEXT)')
+db.commit()
 
 plugins = []
 contexts = []
@@ -35,6 +45,16 @@ lpserver = requests.post('https://api.vk.com/method/groups.getLongPollServer',da
 ts = lpserver['ts']
 active = {'bot_uses':0}
 active['start_time'] = time.monotonic()
+db_cur.execute('SELECT * FROM system WHERE name=\'uses\'')
+active['bot_uses_full'] = db_cur.fetchone()
+if active['bot_uses_full'] == None:
+    active['bot_uses_full'] = 0
+    db_cur.execute('INSERT INTO system VALUES (\'uses\',\'0\')')
+    db.commit()
+else: active['bot_uses_full'] = int(active['bot_uses_full'][1])
+
+
+
 log('Инициализация бота завершена',0)
 
 while(True):
@@ -54,6 +74,7 @@ while(True):
             if updates['type'] == 'message_new':
                 updates = updates['object']['message']
                 msg = updates
+                msg['timer'] = time.time()
                 msg['text'] = msg['text']
                 msg['toho'] = updates['peer_id']
                 msg['userid'] = updates['from_id']
@@ -61,25 +82,59 @@ while(True):
                 msg['config'] = config
                 if msg['userid'] <= 0:
                     continue
-                userinfo = userdb.cursor().execute('SELECT * FROM main WHERE id='+str(msg['userid'])).fetchone()
-                if userinfo == None:
-                    userdb.cursor().execute('INSERT INTO main VALUES ({0},{1},\'{2}\',\'{3}\')'.format(msg['userid'],1,'main','{}'))
-                    userdb.commit()
-                    userinfo = userdb.cursor().execute('SELECT * FROM main WHERE id='+str(msg['userid'])).fetchone();
-                    log('Добавлен новый пользователь '+str(msg['userid']),0)
-                if userinfo[1] < 1:
-                    apisay('Ты в бане :(',msg['toho'])
-                    continue
 
+                db_cur.execute('SELECT * FROM dialogs WHERE id='+str(msg['toho']))
+                dialoginfo = db_cur.fetchone()
+                if dialoginfo == None:
+                    db_cur.execute('INSERT INTO dialogs VALUES ({0},\'{1}\',\'{2}\')'.format(msg['toho'],'{"params":[]}','[]'))
+                    db.commit()
+                    db_cur.execute('SELECT * FROM dialogs WHERE id='+str(msg['toho']))
+                    dialoginfo = db_cur.fetchone()
+                    log('Добавлена беседа в бд '+str(msg['userid']),0)       
+  
+                msg['dialogdata'] = json.loads(dialoginfo[1])
+
+                msg['dialogusers'] = json.loads(dialoginfo[2])
+                if msg['userid'] not in msg['dialogusers']:
+                    msg['dialogusers'].append(msg['userid'])
+                    log('Пользователь {0} добавлен бд беседы {1}'.format(msg['userid'],msg['toho']))
+                    db_cur.execute('UPDATE dialogs SET users=\'{0}\' WHERE id={1}'.format(json.dumps(msg['dialogusers']),msg['toho']))
+                    db.commit()
+
+                db_cur.execute('SELECT * FROM users WHERE id='+str(msg['userid']))
+                userinfo = db_cur.fetchone()
+
+                if userinfo == None:
+                    db_cur.execute('INSERT INTO users VALUES ({0},{1},\'{2}\',\'{3}\')'.format(msg['userid'],1,'main','{}'))
+                    db.commit()
+                    db_cur.execute('SELECT * FROM users WHERE id='+str(msg['userid']))
+                    userinfo = db_cur.fetchone()
+                    log('Добавлен новый пользователь '+str(msg['userid']),0)
                 msg['userdata'] = json.loads(userinfo[3])
-                msg['userdb'] = userdb
-                cmdinfo = iscommand(msg['text'],plugins)
+                if userinfo[1] < 1:
+                    if 'ban_start' in msg['userdata']:
+                        if (time.time()-msg['userdata']['ban_start']) >= msg['userdata']['ban_time']:
+                            del msg['userdata']['ban_start']
+                            del msg['userdata']['ban_time']
+                            db_cur.execute('UPDATE users SET data=\'{0}\' WHERE id={1}'.format(json.dumps(msg['userdata']),msg['userid']))
+                            db_cur.execute('UPDATE users SET perm=1 WHERE id='+str(msg['userid']))
+                            db.commit()
+                            userinfo[1] = 1
+                        else: continue
+                    else: continue
+
+                msg['db'] = db
+                msg['db_cur'] = db_cur
+                cmdinfo = iscommand(msg['text'],plugins,msg)
                 msg['cmdinfo'] = cmdinfo
 
                 if cmdinfo['iscommand'] != False:
                     if userinfo[1] >= cmdinfo['plugin'].main.level and userinfo[2] == 'main':
                         active['bot_uses'] += 1
+                        active['bot_uses_full'] += 1
+                        db_cur.execute('UPDATE system SET data=\'{0}\' WHERE name=\'uses\''.format(active['bot_uses_full']))
                         msg['active'] = active
+                        msg['userinfo'] = userinfo
                         msg['user_text'] = cmdinfo['user_text']
                         log('Вызвана команда '+cmdinfo['iscommand']+' с текстом: '+msg['text'],msg['toho'])
                         plugin = cmdinfo['plugin'].main()
@@ -92,10 +147,9 @@ while(True):
                     for context in contexts:
                         if context['name'] == userinfo[2]:
                             threading.Thread(target=context['execute'],args=(msg,)).start()
-                            setcontext('main',msg['userid'],userdb)
+                            #setcontext('main',msg['userid'],db)
                             break
                 threading.Thread(target=handler.execute,args=(updates,msg)).start()
-
 
 
     except Exception as error: 

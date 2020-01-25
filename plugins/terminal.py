@@ -3,7 +3,7 @@ from plugins.utils import *
 
 class main:
     level = 256
-    keywords = ['терм','term']
+    keywords = ['терм','term','!']
     def execute(self, msg):
         cmd = msg['user_text'].replace('—','--').split('<br>')
         with open('/tmp/cmd.sh', 'w') as cl:

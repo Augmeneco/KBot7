@@ -1,0 +1,6 @@
+bs4
+requests
+pillow
+xmltodict
+psycopg2-binary
+mcstatus

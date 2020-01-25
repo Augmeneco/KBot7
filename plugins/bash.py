@@ -6,7 +6,6 @@ class main:
 	level = 1
 	keywords = ['баш','bash']
 	def execute(self, msg):
-		msg = libkb.fix_names(msg) 
 		max = int(re.findall('"index" value="(\d*)" auto',requests.get('https://bash.im/').text)[0])
 		randnum = str(random.randint(1,max)) 
 		index = requests.get('https://bash.im/index/'+randnum).text 

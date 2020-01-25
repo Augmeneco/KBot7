@@ -16,12 +16,14 @@ class main:
         Бот:
         &#8195;Чат: {5}
         &#8195;Время работы: {6}
-        &#8195;Обращений: {7}'''
+        &#8195;Обращений с включения: {7}
+        &#8195;Обращений за всё время: {8}
+        &#8195;Права юзера: {9}'''
         
         end_time = time.monotonic()
         RAM = re.findall('\d+',subprocess.getoutput('free -m'))
-
         status = status.format(subprocess.getoutput('uptime'),RAM[0],RAM[1],(int(RAM[0])-int(RAM[1])),re.findall('VmRSS:\s+(\d+) kB',open('/proc/self/status','r').read())[0],\
-        msg['toho'],datetime.timedelta(seconds=end_time - msg['active']['start_time']),msg['active']['bot_uses'])
+        msg['toho'],datetime.timedelta(seconds=end_time - msg['active']['start_time']),msg['active']['bot_uses'],\
+        msg['active']['bot_uses_full'],msg['userinfo'][1])
 
         apisay(status,msg['toho'])

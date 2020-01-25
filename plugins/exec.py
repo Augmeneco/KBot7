@@ -3,7 +3,7 @@ from plugins.utils import *
 
 class main:
     level = 256
-    keywords = ['ебал','exec']
+    keywords = ['eval','exec']
     def execute(self, msg):
         try:
             exec(msg['user_text'].replace('»',' ').replace('—','--'))
