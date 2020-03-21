@@ -5,12 +5,12 @@ class main:
     level = 1
     keywords = ['расп']
     def execute(self, msg):
-        msg['db_cur'].execute('SELECT * FROM system WHERE name=\'rasp\'')
-        config = msg['db_cur'].fetchone() 
+        db_cur.execute('SELECT * FROM system WHERE name=\'rasp\'')
+        config = db_cur.fetchone() 
         if config == None:
             config = {"day": datetime.datetime.now().strftime('%d'), "zam": [False,False,False,False,False,False], "mode": 1}
-            msg['db_cur'].execute('INSERT INTO system VALUES (\'rasp\',\'{0}\')'.format(json.dumps(config)))
-            msg['db'].commit()
+            db_cur.execute('INSERT INTO system VALUES (\'rasp\',\'{0}\')'.format(json.dumps(config)))
+            db.commit()
         else:
             config = json.loads(config[1])
 
@@ -18,23 +18,23 @@ class main:
         if zam_data[0]=='р' and msg['userid'] == 354255965:
             mode = zam_data[1]
             config['mode'] = int(mode)
-            msg['db_cur'].execute('UPDATE system SET data=\'{0}\' WHERE name=\'rasp\''.format(json.dumps(config)))
-            msg['db'].commit()
+            db_cur.execute('UPDATE system SET data=\'{0}\' WHERE name=\'rasp\''.format(json.dumps(config)))
+            db.commit()
             apisay('[LOG] Тип недели изменен на '+str(mode),msg['toho']) 
             return 0
         if zam_data[0]=='сет' and msg['userid'] == 354255965:
             day = zam_data[1]
             text = ' '.join(zam_data[2:])
             config['zam'][int(day)-1] = text
-            msg['db_cur'].execute('UPDATE system SET data=\'{0}\' WHERE name=\'rasp\''.format(json.dumps(config)))
-            msg['db'].commit()
+            db_cur.execute('UPDATE system SET data=\'{0}\' WHERE name=\'rasp\''.format(json.dumps(config)))
+            db.commit()
             apisay('Заметка добавлена',msg['toho'])
             return 0
         if zam_data[0]=='дел' and msg['userid'] == 354255965:
             day = zam_data[1]
             config['zam'][int(day)-1] = False
-            msg['db_cur'].execute('UPDATE system SET data=\'{0}\' WHERE name=\'rasp\''.format(json.dumps(config)))
-            msg['db'].commit()
+            db_cur.execute('UPDATE system SET data=\'{0}\' WHERE name=\'rasp\''.format(json.dumps(config)))
+            db.commit()
             apisay('Заметка удалена',msg['toho'])
             return 0
         mode = config['mode']
@@ -46,8 +46,8 @@ class main:
                 mode=0
             config['mode'] = mode
             config['day'] = date_now[1]
-            msg['db_cur'].execute('UPDATE system SET data=\'{0}\' WHERE name=\'rasp\''.format(json.dumps(config)))
-            msg['db'].commit()
+            db_cur.execute('UPDATE system SET data=\'{0}\' WHERE name=\'rasp\''.format(json.dumps(config)))
+            db.commit()
             apisay('[LOG] Тип недели изменен на '+str(mode),msg['toho']) 
 
         if mode==0:

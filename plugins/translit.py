@@ -3,16 +3,17 @@ from plugins.utils import *
 class main:
 	level = 1
 	keywords = ['pun','пун']
-	def handler(self, msg):
-
+	def execute(self, msg):
+		messages = []
 		if 'reply_message' in msg:
-			message = msg['reply_message']['text']
+			messages.append(msg['reply_message']['text'])
 		else:
 			if len(msg['fwd_messages']) == 0: 
 				apisay('Ты забыл переслать сообщение :(',msg['toho'])
 				return 0
-			message = msg['fwd_messages'][0]['text']
-
+			for mes in msg['fwd_messages']:
+				messages.append(mes['text'])
+		message = '\n'.join(messages)
 		pun = {
 			'rus':'йцукенгшщзхъфывапролджэячсмитьбюё',
         	'eng':"qwertyuiop[]asdfghjkl;'zxcvbnm,.`",

@@ -5,6 +5,9 @@ import plugins.handler as handler
 if '-dev' in sys.argv:
     devmode = True
 else: devmode = False 
+if 'sqlite' in sys.argv:
+    sqlite_mode = True
+else: sqlite_mode = False
 
 config = json.loads(open('data/config.json','r').read())
 
@@ -15,15 +18,6 @@ config['name'] = ret['name']
 
 log('{0} версии {1} от Augmeneco'.format(config['name'],config['version']),0)
 
-if devmode:
-    #db = sqlite3.connect('db')
-    db = psycopg2.connect(database='kbot',user='cha14ka')
-    db_cur = db.cursor()
-    config['names'] = ['кбт','тест']
-else:
-    db = psycopg2.connect(os.environ['DATABASE_URL'], sslmode='require')
-    db_cur = db.cursor()
-
 db_cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER,perm INTEGER,context TEXT,data TEXT)')
 db_cur.execute('CREATE TABLE IF NOT EXISTS system (name TEXT,data TEXT)')
 db_cur.execute('CREATE TABLE IF NOT EXISTS dialogs (id INTEGER,data TEXT,users TEXT)')
@@ -31,6 +25,7 @@ db.commit()
 
 plugins = []
 contexts = []
+peer_contexts = []
 for file in os.listdir('plugins'):
     if os.path.isfile('plugins/'+file) and '.py' in file and file not in ['utils.py','handler.py']:
         plugin = importlib.import_module('plugins.'+file.replace('.py',''))
@@ -39,19 +34,15 @@ for file in os.listdir('plugins'):
         if hasattr(plugin.main,'contexts'):
             contexts += plugin.main.contexts
             log('Загружены контексты из '+file.replace('.py',''),0)
+        if hasattr(plugin.main,'peer_contexts'):
+            peer_contexts += plugin.main.peer_contexts
+            log('Загружены контексты беседы из '+file.replace('.py',''),0)
 
 params = {'access_token':config['group_token'],'v':'5.103','group_id':config['id']}
 lpserver = requests.post('https://api.vk.com/method/groups.getLongPollServer',data=params,timeout=100).json()['response']
 ts = lpserver['ts']
 active = {'bot_uses':0}
 active['start_time'] = time.monotonic()
-db_cur.execute('SELECT * FROM system WHERE name=\'uses\'')
-active['bot_uses_full'] = db_cur.fetchone()
-if active['bot_uses_full'] == None:
-    active['bot_uses_full'] = 0
-    db_cur.execute('INSERT INTO system VALUES (\'uses\',\'0\')')
-    db.commit()
-else: active['bot_uses_full'] = int(active['bot_uses_full'][1])
 
 
 
@@ -101,13 +92,13 @@ while(True):
                     db_cur.execute('UPDATE dialogs SET users=\'{0}\' WHERE id={1}'.format(json.dumps(msg['dialogusers']),msg['toho']))
                     db.commit()
 
-                db_cur.execute('SELECT * FROM users WHERE id='+str(msg['userid']))
+                db_cur.execute('SELECT * FROM users WHERE id='+str(msg['userid'])+' FOR UPDATE')
                 userinfo = db_cur.fetchone()
 
                 if userinfo == None:
                     db_cur.execute('INSERT INTO users VALUES ({0},{1},\'{2}\',\'{3}\')'.format(msg['userid'],1,'main','{}'))
                     db.commit()
-                    db_cur.execute('SELECT * FROM users WHERE id='+str(msg['userid']))
+                    db_cur.execute('SELECT * FROM users WHERE id='+str(msg['userid'])+' FOR UPDATE')
                     userinfo = db_cur.fetchone()
                     log('Добавлен новый пользователь '+str(msg['userid']),0)
                 msg['userdata'] = json.loads(userinfo[3])
@@ -123,15 +114,27 @@ while(True):
                         else: continue
                     else: continue
 
-                msg['db'] = db
-                msg['db_cur'] = db_cur
                 cmdinfo = iscommand(msg['text'],plugins,msg)
                 msg['cmdinfo'] = cmdinfo
+                if 'context' in msg['dialogdata']['params']:
+                    for context in peer_contexts:
+                        if context['name'] == msg['dialogdata']['context_name']:
+                            threading.Thread(target=context['execute'],args=(msg,)).start()
+                            break
 
                 if cmdinfo['iscommand'] != False:
-                    if userinfo[1] >= cmdinfo['plugin'].main.level and userinfo[2] == 'main':
+                    if userinfo[1] >= cmdinfo['plugin'].main.level and userinfo[2] == 'main' and 'context' not in msg['dialogdata']:
                         active['bot_uses'] += 1
+
+                        db_cur.execute('SELECT * FROM system WHERE name=\'uses\'')
+                        active['bot_uses_full'] = db_cur.fetchone()
+                        if active['bot_uses_full'] == None:
+                            active['bot_uses_full'] = 0
+                            db_cur.execute('INSERT INTO system VALUES (\'uses\',\'0\')')
+                            db.commit()
+                        else: active['bot_uses_full'] = int(active['bot_uses_full'][1])
                         active['bot_uses_full'] += 1
+                        
                         db_cur.execute('UPDATE system SET data=\'{0}\' WHERE name=\'uses\''.format(active['bot_uses_full']))
                         msg['active'] = active
                         msg['userinfo'] = userinfo
@@ -143,7 +146,7 @@ while(True):
                         apisay('Тебе недостаточно прав чтобы запустить команду. \
                         Требуемый уровень прав: '+str(cmdinfo['plugin'].main.level),msg['toho'])
 
-                if userinfo[2] != 'main':
+                if userinfo[2] != 'main' and 'context' not in msg['dialogdata']:
                     for context in contexts:
                         if context['name'] == userinfo[2]:
                             threading.Thread(target=context['execute'],args=(msg,)).start()

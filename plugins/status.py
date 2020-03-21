@@ -3,7 +3,7 @@ import datetime, time, subprocess, re
 
 class main:
     level = 1
-    keywords = ['стат','статус','status','stat']
+    keywords = ['стат','статус','status','stat','стата']
     def execute(self,msg):
         status = '''[ Статистика ]
         Процессор:

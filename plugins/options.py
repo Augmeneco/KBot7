@@ -5,7 +5,7 @@ def opt_menu(msg):
     try:
         if msg['text'].lower().replace('/','') in ['stop','exit','выход']:
             apisay('Выхожу из настроек',msg['toho'])
-            setcontext('main',msg['userid'],msg['db'])
+            setcontext('main',msg['userid'],db)
             return 0
         if msg['text'].isdigit():
             num = int(msg['text'])
@@ -15,7 +15,7 @@ def opt_menu(msg):
             if num == 1:
                 if msg['toho'] < 2000000000:
                     apisay('Эту настройку можно использовать лишь в беседах',msg['toho'])
-                    setcontext('main',msg['userid'],msg['db'])
+                    setcontext('main',msg['userid'],db)
                     return 0
                 if 'noname' in msg['dialogdata']['params']:
                     msg['dialogdata']['params'].remove('noname')
@@ -23,10 +23,10 @@ def opt_menu(msg):
                 else:
                     msg['dialogdata']['params'].append('noname')
                     out = 'Режим ответов без имени бота включён'
-                msg['db_cur'].execute('UPDATE dialogs SET data=\'{0}\' WHERE id={1}'.format(json.dumps(msg['dialogdata']),msg['toho']))
-                msg['db'].commit()
+                db_cur.execute('UPDATE dialogs SET data=\'{0}\' WHERE id={1}'.format(json.dumps(msg['dialogdata']),msg['toho']))
+                db.commit()
                 apisay(out,msg['toho'])
-                setcontext('main',msg['userid'],msg['db'])
+                setcontext('main',msg['userid'],db)
                 return 0
             if num == 2:
                 if 'nospeak' in msg['dialogdata']['params']:
@@ -35,10 +35,10 @@ def opt_menu(msg):
                 else:
                     msg['dialogdata']['params'].append('nospeak')
                     out = 'Режим разговора бота выключен'
-                msg['db_cur'].execute('UPDATE dialogs SET data=\'{0}\' WHERE id={1}'.format(json.dumps(msg['dialogdata']),msg['toho']))
-                msg['db'].commit()
+                db_cur.execute('UPDATE dialogs SET data=\'{0}\' WHERE id={1}'.format(json.dumps(msg['dialogdata']),msg['toho']))
+                db.commit()
                 apisay(out,msg['toho'])
-                setcontext('main',msg['userid'],msg['db'])
+                setcontext('main',msg['userid'],db)
                 return 0
         else:
             apisay('Номер пункта должен быть числом',msg['toho'])
@@ -46,7 +46,7 @@ def opt_menu(msg):
     except:
         log(traceback.format_exc(),msg['toho'])
         apisay('Что-то пошло не так, возвращаю тебя в основной контекст',msg['toho'])
-        setcontext('main',msg['userid'],msg['db'])
+        setcontext('main',msg['userid'],db)
 
 
 class main:
@@ -71,4 +71,4 @@ class main:
                 if param=='noname': out = out.replace('NONAME','Выключено')
                 if param=='nospeak': out = out.replace('NOSPEAK','Включено')
         apisay(out,msg['toho'])
-        setcontext('opt_menu',msg['userid'],msg['db'])
+        setcontext('opt_menu',msg['userid'],db)
