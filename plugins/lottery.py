@@ -22,11 +22,11 @@ class main:
             randnum = random.randint(0,100)
             if randnum in range(0,50):
                 user.bank.money -= lot
-                out = 'Ты проиграл {0} кбкоинов :(\nТеперь твой баланс: {1}'.format(lot,user.bank.money)
+                out = 'Тебе выпало число {}, ты проиграл {} кбкоинов :(\nТеперь твой баланс: {}'.format(randnum,lot,user.bank.money)
                 apisay(out,msg['toho'])
             if randnum in range(50,101):
                 user.bank.money += lot
-                out = 'Ты выиграл {0} кбкоинов\nТеперь твой баланс: {1}'.format(lot,user.bank.money)
+                out = 'Тебе выпало число {}, ты выиграл {} кбкоинов\nТеперь твой баланс: {}'.format(randnum,lot,user.bank.money)
                 apisay(out,msg['toho'])
             if user.bank.money == 0:
                 out = 'У тебя кончились кбкоины :(, придется тебе идти отрабатывать их'

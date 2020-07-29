@@ -3,7 +3,7 @@ from plugins.utils import *
 from bs4 import BeautifulSoup
 
 class main:
-	level = 1
+	level = 256
 	keywords = ['что','чтоэто']
 	def execute(self, msg):
 		if len(msg['user_text']) > 0:
