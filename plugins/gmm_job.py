@@ -4,6 +4,7 @@ import io
 from plugins.utils import *
 
 def mining(msg):
+  try:
     if msg['text'].replace('/','') == 'выход':
         apisay('Вы вышли из режима работы', msg['peer_id'])
         setcontext('main', msg['userid'])
@@ -42,6 +43,9 @@ def mining(msg):
     img_png = img_bytes.getvalue()
 
     apisay('Следующий пример', msg['peer_id'], photo=img_png)
+  except:
+    apisay('Произошла какая-то ошибка. Спасаю тебя из контекста',msg['peer_id'])
+    setcontext('main',msg['userid'])
 
 class main:
     level = 1

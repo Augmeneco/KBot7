@@ -43,7 +43,7 @@ class main:
 			url = result['post'][i]['@file_url']
 			tags += result['post'][i]['@tags']
 			requests.post('https://api.vk.com/method/messages.setActivity',data=params)
-			imgs.append(requests.get(url).content)
+			imgs.append(requests.get(url,stream=True))
 		timer = time.time()
 		imglist = list(chunks(imgs,10))
 		for imgs in imglist:

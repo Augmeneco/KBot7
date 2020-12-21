@@ -13,7 +13,7 @@ class main:
             msg['user_text'] += ' '
         
         params = json.dumps({"prompt":msg['user_text'],"length":30,"num_samples":1})
-        result = requests.post('https://models.dobro.ai/gpt2/medium/',data=params).json()
+        result = requests.post('https://pelevin.gpt.dobro.ai/generate/',data=params).json()
 
         if 'replies' not in result:
             apisay('Что-то пошло не так :(',msg['toho'])

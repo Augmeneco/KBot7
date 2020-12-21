@@ -47,12 +47,40 @@ def vk_api(method, token=config['group_token'], **parameters):
 
     return result['response']
 
+class AntiSpam:
+    def __init__(self,user_id,peer_id):
+        self.user_id = user_id
+        self.peer_id = peer_id
+        self.user = User_v2(user_id)
+        if 'spam' not in self.user.data:
+            self.user.data['spam'] = {}
+    def set(self,name):
+        self.user.data['spam'][name] = time.time()
+        self.user.save()
+    def get(self,name,timer):
+        if name not in self.user.data['spam']:
+            return {
+                'CanUse': True,
+                'Timer': 0
+            }
+        if (time.time()-self.user.data['spam'][name] >= timer):
+            return {
+                'CanUse': True,
+                'Timer': 0
+            }
+        else:
+            return {
+                'CanUse': False,
+                'Timer': time.time()-self.user.data['spam'][name]
+            }
+
 def IsIntOpt(num,min=0,max=10,opts=None):
     if not num.isdigit():
         return False
     if opts != None:
         if num not in opts:
             return False
+    if type(num) == str: num = int(num)
     if num < min:
         return False
     if num > max:
@@ -74,6 +102,51 @@ class Dialog:
         sql = sql.format(json.dumps(self.data),self.users,self.peer_id)
         db_cur.execute(sql) 
         db.commit()
+
+class User_v2:
+    def __init__(self,user_id):
+        self.id = user_id
+        db_cur.execute('SELECT * FROM users WHERE id=%s',[self.id])
+        self.info = db_cur.fetchone()
+        self.NewUser = False
+        if self.info == None:
+            db_cur.execute(
+                'INSERT INTO users VALUES (%s,%s,%s,%s)',[self.id,1,'main','{}']
+            )
+            db.commit()
+            self.data = {}
+            self.level = 1
+            self.context = 'main'
+            self.NewUser = True
+        else:
+            self.data = json.loads(self.info[3])
+            self.context = self.info[2]
+            self.level = self.info[1]
+    def reload(self):
+        db_cur.execute('SELECT * FROM users WHERE id=%s',[self.id])
+        self.info = db_cur.fetchone()
+        self.data = json.loads(self.info[3])
+        self.level = self.info[1]
+    def save(self):
+        db_cur.execute('UPDATE users SET data = %s WHERE id = %s',[json.dumps(self.data),self.id])
+        db.commit()
+    def CmdsLock(self,lock,timeout=False):
+        if timeout:
+            if (time.time()-self.data['cmds_lock']['time']) >= 60*5:
+                del self.data['cmds_lock']['active']
+                del self.data['cmds_lock']['time']
+                self.save()
+                return False
+            return True
+        if lock==None: return
+        if lock:
+            self.data['cmds_lock']['active'] = True
+            self.data['cmds_lock']['time'] = time.time()
+            self.save()
+        else:
+            del self.data['cmds_lock']['active']
+            del self.data['cmds_lock']['time']
+            self.save()
 
 class User:
     userid: int
@@ -225,6 +298,12 @@ def apisay_old(text,toho,attachment=None,keyboard={"buttons":[],"one_time":True}
 def apisay(text,toho,attachment=None,keyboard=None,photo=None,file=None,params={}):
     token = config['group_token']
     params = {'v':'5.80','access_token':token,'peer_id':toho}
+    if type(photo) == requests.models.Response:
+        ret = requests.get('https://api.vk.com/method/photos.getMessagesUploadServer?access_token={access_token}&v=5.68'.format(access_token=token)).json()
+        ret = requests.post(ret['response']['upload_url'],files={'photo':('photo.png',photo.content,'image/png')}).json()
+        ret = requests.get('https://api.vk.com/method/photos.saveMessagesPhoto?v=5.103&server='+str(ret['server'])+'&photo='+ret['photo']+'&hash='+str(ret['hash'])+'&access_token='+token).json()
+        ret = ret['response'][0]
+        params['attachment'] = 'photo{0}_{1},'.format(ret['owner_id'],ret['id'])
     if type(photo) == bytes:
         ret = requests.get('https://api.vk.com/method/photos.getMessagesUploadServer?access_token={access_token}&v=5.68'.format(access_token=token)).json()
         ret = requests.post(ret['response']['upload_url'],files={'photo':('photo.png',photo,'image/png')}).json()
@@ -236,7 +315,10 @@ def apisay(text,toho,attachment=None,keyboard=None,photo=None,file=None,params={
         for img in photo:
             try:
                 ret = requests.get('https://api.vk.com/method/photos.getMessagesUploadServer?access_token={access_token}&v=5.68'.format(access_token=token)).json()
-                ret = requests.post(ret['response']['upload_url'],files={'photo':('photo.png',img,'image/png')}).json()
+                if type(img) == bytes:
+                    ret = requests.post(ret['response']['upload_url'],files={'photo':('photo.png',img,'image/png')}).json()
+                if type(img) == requests.models.Response:
+                    ret = requests.post(ret['response']['upload_url'],files={'photo':('photo.png',img.content,'image/png')}).json()
                 ret = requests.get('https://api.vk.com/method/photos.saveMessagesPhoto?v=5.103&server='+str(ret['server'])+'&photo='+ret['photo']+'&hash='+str(ret['hash'])+'&access_token='+token).json()
                 ret = ret['response'][0]
                 params['attachment'] += 'photo{0}_{1},'.format(ret['owner_id'],ret['id'])

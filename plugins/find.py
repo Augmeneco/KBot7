@@ -3,9 +3,10 @@ from plugins.utils import *
 from bs4 import BeautifulSoup
 
 class main:
-	level = 256
+	level = 1
 	keywords = ['что','чтоэто']
 	def execute(self, msg):
+		return
 		if len(msg['user_text']) > 0:
 			exit()
 		if 'photo' in msg['attachments'][0]:

@@ -5,7 +5,7 @@ from plugins.utils import *
 
 class main:
     level = 1
-    keywords = ['cas','жмых']
+    keywords = ['cas','жмых','кас']
     def execute(self, msg):
         if len(msg['attachments']) == 0:
             apisay('Картинку сунуть забыл',msg['toho'])
@@ -46,7 +46,7 @@ class main:
 
             txt = Image.new('RGBA', size, (255,255,255,0))
             draw = ImageDraw.Draw(txt)
-            text = "@kbot_group"
+            text = "@chaika_cbot"
             for tsize in range(100):
                 font = ImageFont.truetype('data/text.ttf', tsize) 
                 textwidth, textheight = draw.textsize(text, font)
@@ -66,7 +66,7 @@ class main:
                 draw.text((x+off, y-off), text, font=font, fill=(0,0,0,50)) 
 
             draw.text((x, y), text, font=font, fill=(255,255,255,50)) 
-            image_obj = Image.alpha_composite(image_obj, txt)
+            #image_obj = Image.alpha_composite(image_obj, txt)
 
             image_obj.save(imgByteArr,format='PNG')
             

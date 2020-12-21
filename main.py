@@ -4,8 +4,8 @@ import plugins.handler as handler
 
 if '-dev' in sys.argv:
     devmode = True
-else: devmode = False 
-if 'sqlite' in sys.argv:
+else: devmode = False
+if 'sqlite' in sys.argv: 
     sqlite_mode = True
 else: sqlite_mode = False
 
